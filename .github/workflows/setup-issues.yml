@@ -1,0 +1,205 @@
+# Crea issues de la actividad para repos creados desde GitHub Classroom.
+# Idempotente: crea solamente los issues faltantes por titulo.
+name: Setup assignment issues
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+  repository_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: setup-issues-${{ github.repository }}
+  cancel-in-progress: false
+
+jobs:
+  ensure-assignment-issues:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Crear issues faltantes de la actividad
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          python3 << 'PY'
+          import json
+          import os
+          import textwrap
+          import urllib.error
+          import urllib.parse
+          import urllib.request
+
+          REPO = os.environ["GITHUB_REPOSITORY"]
+          TOKEN = os.environ["GITHUB_TOKEN"]
+          API = "https://api.github.com"
+          ISSUE_LABEL = "classroom-assignment"
+
+          ISSUES = [
+              {
+                  "title": "[Entrega 1] Servidor Express y Colección de Datos de Dragon Ball",
+                  "body": """
+          ## Objetivo
+          Configurar el backend local con Express, habilitar soporte para CORS y disponibilizar los endpoints REST para consultar, crear y eliminar guerreros del universo Dragon Ball.
+
+          ## Qué debe cumplirse
+          - [ ] En `server/server.js`, inicializar la aplicación con `express()`, middleware `cors()` y `express.json()`.
+          - [ ] Proveer datos iniciales en `server/data/personajes.json`.
+          - [ ] Implementar la ruta `GET /api/personajes` que responda la colección completa.
+          - [ ] Implementar la ruta `POST /api/personajes` que valide campos obligatorios (`name`, `race`) y retorne status `201`.
+          - [ ] Implementar la ruta `DELETE /api/personajes/:id` para remover un guerrero por ID.
+          - [ ] Verificar con `bash scripts/classroom-check.sh backend-api`.
+
+          ## Commit sugerido
+          ```
+          feat: configurar servidor express con endpoints GET POST DELETE (Closes #1)
+          ```
+          """,
+              },
+              {
+                  "title": "[Entrega 2] Enrutamiento con React Router y Barra de Navegación",
+                  "body": """
+          ## Objetivo
+          Integrar el enrutamiento declarativo de React Router (`react-router-dom`) configurando `BrowserRouter`, `Routes` y `Route` en `src/App.jsx`, y enlaces interactivos con `NavLink` en `src/components/Navbar.jsx`.
+
+          ## Qué debe cumplirse
+          - [ ] En `src/App.jsx`, envolver la aplicación dentro del componente `<BrowserRouter>`.
+          - [ ] Renderizar `<Navbar />` para que sea visible en todas las páginas.
+          - [ ] Envolver las vistas en `<main className="app-main-layout"><Routes>...</Routes></main>`.
+          - [ ] Configurar las rutas:
+            - Ruta raíz `'/'`: renderiza el Visor de Guerreros (`<PersonajesViewer />`).
+            - Ruta de creación `'/nuevo'`: renderiza el formulario de alta (`<FormularioPersonaje />`).
+            - Ruta comodín `'*'`: renderiza pantalla 404 con enlace `<Link to="/">` para regresar.
+          - [ ] En `src/components/Navbar.jsx`, renderizar enlaces con `<NavLink>` hacia `'/'` y `'/nuevo'`.
+          - [ ] Verificar con `bash scripts/classroom-check.sh react-router`.
+
+          ## Commit sugerido
+          ```
+          feat: configurar react router rutas y navbar (Closes #2)
+          ```
+          """,
+              },
+              {
+                  "title": "[Entrega 3] Componente PersonajeCard y Paso de Argumentos en Eventos",
+                  "body": """
+          ## Objetivo
+          Construir el componente presentacional puro `PersonajeCard.jsx` consumiendo propiedades para renderizar los detalles del guerrero y despachar el evento de eliminación pasando su identificador.
+
+          ## Qué debe cumplirse
+          - [ ] En `src/components/PersonajeCard.jsx`, recibir las props `{ personaje, onEliminar }`.
+          - [ ] Renderizar la imagen del guerrero con `src={personaje.image}`, nombre (`h2.personaje-nombre`) y badges de ki y raza.
+          - [ ] Vincular el botón de eliminación pasando el identificador del personaje como argumento al evento:
+            `onClick={(e) => onEliminar(personaje.id, e)}`.
+          - [ ] Verificar con `bash scripts/classroom-check.sh personaje-card`.
+
+          ## Commit sugerido
+          ```
+          feat: implementar componente presentacional PersonajeCard con argumentos (Closes #3)
+          ```
+          """,
+              },
+              {
+                  "title": "[Entrega 4] Visor de Guerreros: Carga Inicial (GET) y Teclado con Limpieza",
+                  "body": """
+          ## Objetivo
+          Consumir la API local al montar el componente principal con `useEffect` y construir el visor interactivo con navegación circular y atajos globales de teclado con desuscripción obligatoria.
+
+          ## Qué debe cumplirse
+          - [ ] En `src/App.jsx`, utilizar `useEffect` con dependencias vacías `[]` para realizar una petición `fetch('http://localhost:3000/api/personajes')`.
+          - [ ] En `src/components/PersonajesViewer.jsx`, implementar navegación circular para `onSiguiente` y `onAnterior`.
+          - [ ] En `PersonajesViewer.jsx`, escuchar el evento `keydown` en `window` para las flechas izquierda (`ArrowLeft`) y derecha (`ArrowRight`).
+          - [ ] **Retornar obligatoriamente la función de limpieza (*cleanup*)** con `window.removeEventListener('keydown', ...)` para evitar fugas de memoria.
+          - [ ] Verificar con `bash scripts/classroom-check.sh keyboard-cleanup`.
+
+          ## Commit sugerido
+          ```
+          feat: integrar peticion GET inicial y visor con navegacion de teclado (Closes #4)
+          ```
+          """,
+              },
+              {
+                  "title": "[Entrega 5] Formulario Controlado, Validaciones y Creación con fetch (POST)",
+                  "body": """
+          ## Objetivo
+          Crear el componente `FormularioPersonaje.jsx` empleando componentes controlados, validación de datos en cliente y envío asíncrono con método POST hacia el servidor Express.
+
+          ## Qué debe cumplirse
+          - [ ] En `src/components/FormularioPersonaje.jsx`, conectar cada input al estado (puedes utilizar el custom hook `useInput` provisto en `src/hooks/useInput.js` o `useState`).
+          - [ ] Prevenir el comportamiento por defecto del formulario con `e.preventDefault()`.
+          - [ ] Validar que el nombre tenga al menos 3 caracteres tras eliminar espacios iniciales (`trim().length >= 3`) y que se especifique la raza.
+          - [ ] Si los datos son inválidos, mostrar un mensaje de error en pantalla y cancelar el envío.
+          - [ ] Si son válidos, enviar la petición `fetch('http://localhost:3000/api/personajes', { method: 'POST', ... })`.
+          - [ ] Al recibir respuesta exitosa (status 201), notificar al componente padre vía `onPersonajeCreado` y reiniciar los campos.
+          - [ ] Verificar con `bash scripts/classroom-check.sh controlled-form`.
+
+          ## Commit sugerido
+          ```
+          feat: implementar formulario controlado validaciones y peticion POST (Closes #5)
+          ```
+          """,
+              },
+              {
+                  "title": "[Entrega 6] Eliminación con Parámetros, Integración y Build",
+                  "body": """
+          ## Objetivo
+          Conectar el flujo de eliminación en `App.jsx`, ajustar la experiencia visual e interactiva, y asegurar que el proyecto compile de manera limpia para producción.
+
+          ## Qué debe cumplirse
+          - [ ] En `src/App.jsx`, conectar `handleEliminar` enviando `DELETE` al servidor Express y actualizando el estado local.
+          - [ ] Verificar estilos visuales responsivos en `src/App.css` e `index.css`.
+          - [ ] Ejecutar `npm run build` y asegurar la compilación limpia de Vite en `dist/`.
+          - [ ] Verificar linters con `npm run lint` y `npm run format:check`.
+          - [ ] Comprobar toda la suite con `bash scripts/classroom-check.sh all`.
+
+          ## Commit sugerido
+          ```
+          feat: integrar eliminacion con parametros y validar build (Closes #6)
+          ```
+          """,
+              },
+          ]
+
+          def req(method, path, data=None):
+              url = f"{API}/repos/{REPO}{path}"
+              headers = {
+                  "Authorization": f"Bearer {TOKEN}",
+                  "Accept": "application/vnd.github+json",
+                  "User-Agent": "classroom-issues-bot",
+              }
+              body = json.dumps(data).encode("utf-8") if data else None
+              request = urllib.request.Request(url, data=body, headers=headers, method=method)
+              try:
+                  with urllib.request.urlopen(request) as response:
+                      if response.status == 204:
+                          return None
+                      return json.loads(response.read().decode("utf-8"))
+              except urllib.error.HTTPError as e:
+                  detail = e.read().decode("utf-8", errors="replace")
+                  raise RuntimeError(f"GitHub API {method} {url} falló con {e.code}: {detail}")
+
+          print(f"Buscando issues existentes en {REPO}...")
+          existing = req("GET", "/issues?state=all&per_page=100") or []
+          existing_titles = {i["title"].strip() for i in existing if "title" in i}
+
+          for item in ISSUES:
+              title = item["title"].strip()
+              if title in existing_titles:
+                  print(f"Saltando (ya existe): {title}")
+                  continue
+
+              print(f"Creando issue: {title}")
+              body = textwrap.dedent(item["body"]).strip()
+              payload = {
+                  "title": title,
+                  "body": body,
+                  "labels": [ISSUE_LABEL],
+              }
+              req("POST", "/issues", payload)
+
+          print("Sincronización de issues completada.")
+          PY

@@ -1,0 +1,128 @@
+name: Pruebas automáticas (Classroom)
+on:
+  push:
+  workflow_dispatch:
+  repository_dispatch:
+
+permissions:
+  checks: write
+  actions: read
+  contents: read
+
+jobs:
+  run-autograding-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar el repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Instalar dependencias
+        run: npm ci || npm install
+
+      - name: Estructura modular del proyecto
+        id: test-structure-check
+        uses: classroom-resources/autograding-io-grader@v1
+        with:
+          test-name: 'Estructura modular de carpetas y archivos fuente'
+          command: 'bash scripts/classroom-check.sh structure-check'
+          expected-output: 'CORRECTO'
+          comparison-method: exact
+          timeout: 5
+          max-score: 10
+
+      - name: Backend API Express (GET, POST, DELETE)
+        id: test-backend-api
+        uses: classroom-resources/autograding-io-grader@v1
+        with:
+          test-name: 'API Express con rutas REST y persistencia'
+          command: 'bash scripts/classroom-check.sh backend-api'
+          expected-output: 'CORRECTO'
+          comparison-method: exact
+          timeout: 5
+          max-score: 15
+
+      - name: Enrutamiento con React Router
+        id: test-react-router
+        uses: classroom-resources/autograding-io-grader@v1
+        with:
+          test-name: 'Configuración de BrowserRouter, Routes, Route y NavLink'
+          command: 'bash scripts/classroom-check.sh react-router'
+          expected-output: 'CORRECTO'
+          comparison-method: exact
+          timeout: 5
+          max-score: 15
+
+      - name: Custom Hook useInput
+        id: test-use-input
+        uses: classroom-resources/autograding-io-grader@v1
+        with:
+          test-name: 'Custom Hook useInput para inputs controlados y reset'
+          command: 'bash scripts/classroom-check.sh use-input'
+          expected-output: 'CORRECTO'
+          comparison-method: exact
+          timeout: 5
+          max-score: 10
+
+      - name: Componente PersonajeCard y eventos con argumentos
+        id: test-personaje-card
+        uses: classroom-resources/autograding-io-grader@v1
+        with:
+          test-name: 'Componente PersonajeCard y pase de argumentos en evento'
+          command: 'bash scripts/classroom-check.sh personaje-card'
+          expected-output: 'CORRECTO'
+          comparison-method: exact
+          timeout: 5
+          max-score: 15
+
+      - name: Atajos de teclado y limpieza en visor
+        id: test-keyboard-cleanup
+        uses: classroom-resources/autograding-io-grader@v1
+        with:
+          test-name: 'Navegación por teclado con limpieza de event listener'
+          command: 'bash scripts/classroom-check.sh keyboard-cleanup'
+          expected-output: 'CORRECTO'
+          comparison-method: exact
+          timeout: 5
+          max-score: 15
+
+      - name: Formulario controlado, validaciones y POST
+        id: test-controlled-form
+        uses: classroom-resources/autograding-io-grader@v1
+        with:
+          test-name: 'Formulario controlado con validaciones y POST'
+          command: 'bash scripts/classroom-check.sh controlled-form'
+          expected-output: 'CORRECTO'
+          comparison-method: exact
+          timeout: 5
+          max-score: 15
+
+      - name: Compilación Vite para producción
+        id: test-build-check
+        uses: classroom-resources/autograding-io-grader@v1
+        with:
+          test-name: 'Compilación de producción exitosa con npm run build'
+          command: 'bash scripts/classroom-check.sh build-check'
+          expected-output: 'CORRECTO'
+          comparison-method: exact
+          timeout: 5
+          max-score: 5
+
+      - name: Generar reporte de autograding
+        uses: classroom-resources/autograding-grading-reporter@v1
+        env:
+          TEST-STRUCTURE-CHECK_RESULTS: '${{ steps.test-structure-check.outputs.result }}'
+          TEST-BACKEND-API_RESULTS: '${{ steps.test-backend-api.outputs.result }}'
+          TEST-REACT-ROUTER_RESULTS: '${{ steps.test-react-router.outputs.result }}'
+          TEST-USE-INPUT_RESULTS: '${{ steps.test-use-input.outputs.result }}'
+          TEST-PERSONAJE-CARD_RESULTS: '${{ steps.test-personaje-card.outputs.result }}'
+          TEST-KEYBOARD-CLEANUP_RESULTS: '${{ steps.test-keyboard-cleanup.outputs.result }}'
+          TEST-CONTROLLED-FORM_RESULTS: '${{ steps.test-controlled-form.outputs.result }}'
+          TEST-BUILD-CHECK_RESULTS: '${{ steps.test-build-check.outputs.result }}'
+        with:
+          runners: test-structure-check,test-backend-api,test-react-router,test-use-input,test-personaje-card,test-keyboard-cleanup,test-controlled-form,test-build-check

@@ -1,0 +1,23 @@
+# Dependencias
+node_modules/
+
+# Producción y caché de Vite
+dist/
+dist-ssr/
+.vite/
+*.local
+
+# Archivos de cátedra excluidos de la entrega de alumnos
+contenidos.html
+contenidos.md
+Formularios-en-React/
+widgets html/
+widgets para onecompiler/
+
+# Logs del sistema y editores
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.DS_Store
+Thumbs.db

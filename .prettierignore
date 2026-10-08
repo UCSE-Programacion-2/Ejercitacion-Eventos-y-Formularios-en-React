@@ -1,0 +1,11 @@
+node_modules
+dist
+dist-ssr
+.vite
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+contenidos.html
+contenidos.md
+Formularios-en-React
+server/data/personajes.json
